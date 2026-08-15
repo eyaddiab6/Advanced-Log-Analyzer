@@ -33,6 +33,28 @@
         "enabled": true
     },
 
+    "web_path_scanning": {
+        "enabled": true,
+        "path_threshold": 5,
+        "time_window": 60
+    },
+
+    "sensitive_file_access": {
+        "enabled": true
+    },
+
+    "404_scanning": {
+        "enabled": true,
+        "threshold": 5,
+        "time_window": 60
+    },
+
+    "request_flood": {
+        "enabled": true,
+        "threshold": 20,
+        "time_window": 10
+    },
+
     "trusted_ips": [
         "192.168.1.20"
     ],

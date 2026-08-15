@@ -7,18 +7,33 @@ from collections import Counter
 def generate_summary(events, alerts):
     total_events = len(events)
 
+    ssh_events = [
+        event
+        for event in events
+        if event.get("event_type") == "ssh_login"
+    ]
+
+    web_events = [
+        event
+        for event in events
+        if event.get("event_type") == "http_request"
+    ]
+
     successful_logins = sum(
-        1 for event in events
-        if event["status"] == "success"
+        1
+        for event in ssh_events
+        if event.get("status") == "success"
     )
 
     failed_logins = sum(
-        1 for event in events
-        if event["status"] == "failed"
+        1
+        for event in ssh_events
+        if event.get("status") == "failed"
     )
 
     severity_counts = Counter(
-        alert["severity"] for alert in alerts
+        alert.get("severity", "UNKNOWN")
+        for alert in alerts
     )
 
     total_alert_occurrences = sum(
@@ -40,17 +55,26 @@ def generate_summary(events, alerts):
         )
 
     targeted_users = Counter(
-        event["username"]
-        for event in events
-        if event["status"] == "failed"
+        event.get("username")
+        for event in ssh_events
+        if (
+            event.get("status") == "failed"
+            and event.get("username")
+        )
     )
 
     mitre_counts = Counter()
 
     for alert in alerts:
+        mitre_id = alert.get("mitre_id")
+        mitre_name = alert.get("mitre_name")
+
+        if not mitre_id:
+            continue
+
         key = (
-            alert["mitre_id"],
-            alert["mitre_name"]
+            mitre_id,
+            mitre_name or "Unknown"
         )
 
         mitre_counts[key] += alert.get(
@@ -62,24 +86,80 @@ def generate_summary(events, alerts):
     top_suspicious_ip_alerts = 0
 
     if alert_ip_counts:
-        top_suspicious_ip, top_suspicious_ip_alerts = (
-            alert_ip_counts.most_common(1)[0]
-        )
-        highest_risk_alert = None
+        (
+            top_suspicious_ip,
+            top_suspicious_ip_alerts
+        ) = alert_ip_counts.most_common(1)[0]
+
+    highest_risk_alert = None
 
     if alerts:
         highest_risk_alert = max(
-        alerts,
-        key=lambda alert: alert.get(
-            "risk_score",
-            0
+            alerts,
+            key=lambda alert: alert.get(
+                "risk_score",
+                0
+            )
         )
+
+    source_counts = Counter(
+        event.get("source_type", "unknown")
+        for event in events
     )
+
+    http_method_counts = Counter(
+        event.get("method")
+        for event in web_events
+        if event.get("method")
+    )
+
+    http_status_counts = Counter(
+        event.get("status_code")
+        for event in web_events
+        if event.get("status_code") is not None
+    )
+
+    requested_paths = Counter(
+        event.get("path")
+        for event in web_events
+        if event.get("path")
+    )
+
+    http_2xx = sum(
+        1
+        for event in web_events
+        if 200 <= event.get("status_code", 0) < 300
+    )
+
+    http_3xx = sum(
+        1
+        for event in web_events
+        if 300 <= event.get("status_code", 0) < 400
+    )
+
+    http_4xx = sum(
+        1
+        for event in web_events
+        if 400 <= event.get("status_code", 0) < 500
+    )
+
+    http_5xx = sum(
+        1
+        for event in web_events
+        if 500 <= event.get("status_code", 0) < 600
+    )
+
     return {
         "total_events": total_events,
+
+        "ssh_events": len(ssh_events),
+        "web_events": len(web_events),
+
         "successful_logins": successful_logins,
         "failed_logins": failed_logins,
+
         "highest_risk_alert": highest_risk_alert,
+
         "unique_alerts": len(alerts),
         "total_alert_occurrences": total_alert_occurrences,
 
@@ -124,7 +204,43 @@ def generate_summary(events, alerts):
                 mitre_name
             ), count
             in mitre_counts.most_common()
-        ]
+        ],
+
+        "source_summary": [
+            {
+                "source": source,
+                "events": count
+            }
+            for source, count
+            in source_counts.most_common()
+        ],
+
+        "http_method_summary": [
+            {
+                "method": method,
+                "requests": count
+            }
+            for method, count
+            in http_method_counts.most_common()
+        ],
+
+        "http_status_summary": [
+            {
+                "status_code": status_code,
+                "requests": count
+            }
+            for status_code, count
+            in http_status_counts.most_common()
+        ],
+
+        "top_requested_paths": (
+            requested_paths.most_common(10)
+        ),
+
+        "http_2xx": http_2xx,
+        "http_3xx": http_3xx,
+        "http_4xx": http_4xx,
+        "http_5xx": http_5xx
     }
 
 
@@ -134,6 +250,16 @@ def print_summary(summary):
     print(
         f"Total Events: "
         f"{summary['total_events']}"
+    )
+
+    print(
+        f"SSH Events: "
+        f"{summary['ssh_events']}"
+    )
+
+    print(
+        f"Web Events: "
+        f"{summary['web_events']}"
     )
 
     print(
@@ -226,6 +352,50 @@ def print_summary(summary):
             "No targeted users detected."
         )
 
+    print("\n=== Web Statistics ===")
+
+    print(
+        f"HTTP 2xx: "
+        f"{summary['http_2xx']}"
+    )
+
+    print(
+        f"HTTP 3xx: "
+        f"{summary['http_3xx']}"
+    )
+
+    print(
+        f"HTTP 4xx: "
+        f"{summary['http_4xx']}"
+    )
+
+    print(
+        f"HTTP 5xx: "
+        f"{summary['http_5xx']}"
+    )
+
+    if summary["http_method_summary"]:
+        print("\nHTTP Methods:")
+
+        for item in summary[
+            "http_method_summary"
+        ]:
+            print(
+                f"{item['method']} -> "
+                f"{item['requests']} request(s)"
+            )
+
+    if summary["top_requested_paths"]:
+        print("\nTop Requested Paths:")
+
+        for path, count in summary[
+            "top_requested_paths"
+        ]:
+            print(
+                f"{path} -> "
+                f"{count} request(s)"
+            )
+
     print("\n=== MITRE ATT&CK Summary ===")
 
     if summary["mitre_summary"]:
@@ -268,7 +438,8 @@ def export_json_report(
 
     with open(
         file_path,
-        "w"
+        "w",
+        encoding="utf-8"
     ) as file:
         json.dump(
             report,
@@ -302,33 +473,50 @@ def export_alerts_csv(
         "type",
         "severity",
         "severity_score",
+        "risk_score",
+        "risk_level",
         "trusted_ip",
         "original_severity",
         "mitre_id",
         "mitre_name",
         "ip",
         "username",
+        "source_type",
         "timestamp",
         "status",
+
+        "method",
+        "path",
+        "status_code",
+        "matched_pattern",
+
         "failed_attempts",
         "previous_failures",
+        "failed_requests",
+        "request_count",
+
         "time_window",
         "login_hour",
+
         "unique_users",
         "targeted_users",
+
         "unique_source_ips",
         "source_ips",
+
+        "unique_paths",
+        "paths",
+
         "occurrences",
         "first_seen",
-        "last_seen",""
-        "risk_score",
-        "risk_level",
+        "last_seen"
     ]
 
     with open(
         file_path,
         "w",
-        newline=""
+        newline="",
+        encoding="utf-8"
     ) as file:
         writer = csv.DictWriter(
             file,
@@ -346,25 +534,21 @@ def export_alerts_csv(
                 for field in fieldnames
             }
 
-            if isinstance(
-                row.get("targeted_users"),
-                list
-            ):
-                row["targeted_users"] = (
-                    ", ".join(
-                        row["targeted_users"]
-                    )
-                )
+            list_fields = [
+                "targeted_users",
+                "source_ips",
+                "paths"
+            ]
 
-            if isinstance(
-                row.get("source_ips"),
-                list
-            ):
-                row["source_ips"] = (
-                    ", ".join(
-                        row["source_ips"]
+            for field in list_fields:
+                if isinstance(
+                    row.get(field),
+                    list
+                ):
+                    row[field] = ", ".join(
+                        str(item)
+                        for item in row[field]
                     )
-                )
 
             writer.writerow(row)
 

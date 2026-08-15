@@ -36,6 +36,11 @@
                     Dashboard
                 </a>
 
+                <a href="#timeline" class="nav-item">
+                    <span>◷</span>
+                    Timeline
+                </a>
+
                 <a href="#alerts" class="nav-item">
                     <span>⚠</span>
                     Alerts
@@ -81,7 +86,7 @@
                     </h1>
 
                     <p class="subtitle">
-                        Real-time SSH security monitoring and threat detection
+                        Multi-source SSH, Apache, and Nginx security monitoring
                     </p>
                 </div>
 
@@ -104,8 +109,7 @@
         </h2>
 
         <p>
-            Upload a Linux SSH authentication
-            log and run the detection engine.
+            Upload an SSH, Apache, or Nginx log and run the detection engine.
         </p>
 
         <div class="current-file">
@@ -218,13 +222,13 @@
 
 {% endif %}
 
-            <section class="timeline-panel">
+            <section class="timeline-panel" id="timeline">
 
                 <div class="panel-header">
                     <div>
                         <h2>Security Timeline</h2>
                         <p>
-                            Chronological view of authentication activity
+                            Chronological view of parsed SSH and web activity
                         </p>
                     </div>
                 </div>
@@ -233,49 +237,105 @@
 
                     {% for event in events %}
 
-                        <div class="timeline-item">
+                        {% if event.event_type == "ssh_login" %}
 
-                            <div
-                                class="
-                                    timeline-marker
-                                    timeline-{{ event.status }}
-                                "
-                            ></div>
+                            <div class="timeline-item">
 
-                            <div class="timeline-content">
+                                <div
+                                    class="
+                                        timeline-marker
+                                        timeline-{{ event.status }}
+                                    "
+                                ></div>
 
-                                <div class="timeline-top">
+                                <div class="timeline-content">
 
-                                    <strong>
-                                        {{ event.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
-                                    </strong>
+                                    <div class="timeline-top">
 
-                                    <span
-                                        class="
-                                            timeline-status
-                                            status-{{ event.status }}
-                                        "
-                                    >
-                                        {{ event.status|upper }}
-                                    </span>
+                                        <strong>
+                                            {{ event.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
+                                        </strong>
+
+                                        <span
+                                            class="
+                                                timeline-status
+                                                status-{{ event.status }}
+                                            "
+                                        >
+                                            SSH {{ event.status|upper }}
+                                        </span>
+
+                                    </div>
+
+                                    <p>
+                                        User:
+                                        <strong>{{ event.username }}</strong>
+
+                                        • IP:
+                                        <strong>{{ event.ip }}</strong>
+
+                                        • Source:
+                                        <strong>{{ event.source_type|upper }}</strong>
+                                    </p>
 
                                 </div>
 
-                                <p>
-                                    User:
-                                    <strong>
-                                        {{ event.username }}
-                                    </strong>
+                            </div>
 
-                                    • IP:
-                                    <strong>
-                                        {{ event.ip }}
-                                    </strong>
-                                </p>
+                        {% elif event.event_type == "http_request" %}
+
+                            <div class="timeline-item">
+
+                                <div
+                                    class="
+                                        timeline-marker
+                                        {% if 200 <= event.status_code < 400 %}
+                                            timeline-success
+                                        {% else %}
+                                            timeline-failed
+                                        {% endif %}
+                                    "
+                                ></div>
+
+                                <div class="timeline-content">
+
+                                    <div class="timeline-top">
+
+                                        <strong>
+                                            {{ event.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
+                                        </strong>
+
+                                        <span
+                                            class="
+                                                timeline-status
+                                                {% if 200 <= event.status_code < 400 %}
+                                                    status-success
+                                                {% else %}
+                                                    status-failed
+                                                {% endif %}
+                                            "
+                                        >
+                                            {{ event.method }} {{ event.status_code }}
+                                        </span>
+
+                                    </div>
+
+                                    <p>
+                                        IP:
+                                        <strong>{{ event.ip }}</strong>
+
+                                        • Path:
+                                        <strong>{{ event.path }}</strong>
+
+                                        • Source:
+                                        <strong>{{ event.source_type|upper }}</strong>
+                                    </p>
+
+                                </div>
 
                             </div>
 
-                        </div>
+                        {% endif %}
 
                     {% endfor %}
 
@@ -290,6 +350,22 @@
                     <h2>{{ summary.total_events }}</h2>
                     <span class="card-description">
                         Parsed log events
+                    </span>
+                </div>
+
+                <div class="card">
+                    <p>SSH Events</p>
+                    <h2>{{ summary.ssh_events }}</h2>
+                    <span class="card-description">
+                        Authentication activity
+                    </span>
+                </div>
+
+                <div class="card">
+                    <p>Web Events</p>
+                    <h2>{{ summary.web_events }}</h2>
+                    <span class="card-description">
+                        HTTP requests parsed
                     </span>
                 </div>
 
@@ -312,27 +388,27 @@
                 </div>
 
                 <div class="card critical-card">
-                    <p>Critical Alerts</p>
+    <p>Critical Severity</p>
                     <h2>{{ summary.critical_alerts }}</h2>
                     <span class="card-description">
-                        Highest priority
-                    </span>
+    Severity-classified alerts
+</span>
                 </div>
 
                 <div class="card high-card">
-                    <p>High Alerts</p>
+    <p>High Severity</p>
                     <h2>{{ summary.high_alerts }}</h2>
                     <span class="card-description">
-                        High risk detections
-                    </span>
+    Severity-classified alerts
+</span>
                 </div>
 
-                <div class="card medium-card">
-                    <p>Medium Alerts</p>
+               <div class="card medium-card">
+    <p>Medium Severity</p>
                     <h2>{{ summary.medium_alerts }}</h2>
                     <span class="card-description">
-                        Needs investigation
-                    </span>
+    Severity-classified alerts
+</span>
                 </div>
 
             </section>
@@ -362,9 +438,19 @@
 
                     <div class="panel-header">
                         <div>
-                            <h2>Login Activity</h2>
+                            <h2>
+                                {% if summary.web_events > 0 and summary.ssh_events == 0 %}
+                                    HTTP Status Activity
+                                {% else %}
+                                    Login Activity
+                                {% endif %}
+                            </h2>
                             <p>
-                                Successful vs failed authentication
+                                {% if summary.web_events > 0 and summary.ssh_events == 0 %}
+                                    HTTP response status distribution
+                                {% else %}
+                                    Successful vs failed authentication
+                                {% endif %}
                             </p>
                         </div>
                     </div>
@@ -474,6 +560,83 @@
                 </div>
 
 
+                {% if summary.web_events > 0 %}
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h2>HTTP Statistics</h2>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>2xx Success</span>
+                        <strong class="success-text">
+                            {{ summary.http_2xx }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>3xx Redirects</span>
+                        <strong>
+                            {{ summary.http_3xx }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>4xx Client Errors</span>
+                        <strong class="danger-text">
+                            {{ summary.http_4xx }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>5xx Server Errors</span>
+                        <strong class="danger-text">
+                            {{ summary.http_5xx }}
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h2>Top Requested Paths</h2>
+                    </div>
+
+                    {% if summary.top_requested_paths %}
+
+                        {% for path, count in summary.top_requested_paths[:6] %}
+
+                            <div class="list-row">
+
+                                <div>
+                                    <strong>{{ path }}</strong>
+                                    <p>HTTP request path</p>
+                                </div>
+
+                                <span class="badge">
+                                    {{ count }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <p class="empty">
+                            No web paths available.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+                {% endif %}
+
+
                 <div class="panel" id="mitre">
 
                     <div class="panel-header">
@@ -518,8 +681,16 @@
                 <div class="panel">
 
                     <div class="panel-header">
-                        <h2>Login Statistics</h2>
+                        <h2>
+                            {% if summary.web_events > 0 and summary.ssh_events == 0 %}
+                                Source Statistics
+                            {% else %}
+                                Login Statistics
+                            {% endif %}
+                        </h2>
                     </div>
+
+                    {% if summary.ssh_events > 0 %}
 
                     <div class="stat-row">
                         <span>Successful Logins</span>
@@ -536,6 +707,28 @@
                             {{ summary.failed_logins }}
                         </strong>
                     </div>
+
+                    {% endif %}
+
+                    {% if summary.web_events > 0 %}
+
+                    <div class="stat-row">
+                        <span>Web Events</span>
+                        <strong>{{ summary.web_events }}</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Primary Log Source</span>
+                        <strong>
+                            {% if summary.source_summary %}
+                                {{ summary.source_summary[0].source|upper }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    {% endif %}
 
                     <div class="stat-row">
                         <span>Top Suspicious IP</span>
@@ -653,6 +846,7 @@
                                 <th>Risk</th>
                                 <th>Source IP</th>
                                 <th>User</th>
+                                <th>Context</th>
                                 <th>MITRE</th>
                                 <th>Occurrences</th>
                                 <th>First Seen</th>
@@ -684,6 +878,12 @@
     data-failed-attempts="{{ alert.failed_attempts or '-' }}"
     data-previous-failures="{{ alert.previous_failures or '-' }}"
     data-time-window="{{ alert.time_window or '-' }}"
+    data-method="{{ alert.method or '-' }}"
+    data-path="{{ alert.path or '-' }}"
+    data-status-code="{{ alert.status_code or '-' }}"
+    data-failed-requests="{{ alert.failed_requests or '-' }}"
+    data-request-count="{{ alert.request_count or '-' }}"
+    data-matched-pattern="{{ alert.matched_pattern or '-' }}"
 >
 
                                     <td class="alert-id">
@@ -724,6 +924,20 @@
 
                                     <td>
                                         {{ alert.username or "-" }}
+                                    </td>
+
+                                    <td class="alert-context">
+                                        {% if alert.path %}
+                                            {{ alert.method or "HTTP" }}
+                                            {{ alert.path }}
+                                            {% if alert.status_code %}
+                                                ({{ alert.status_code }})
+                                            {% endif %}
+                                        {% elif alert.status %}
+                                            {{ alert.status }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
                                     </td>
 
                                     <td>
@@ -833,6 +1047,36 @@
                     <div class="investigation-item">
                         <span>Previous Failures</span>
                         <strong id="detailPreviousFailures">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>HTTP Method</span>
+                        <strong id="detailMethod">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Request Path</span>
+                        <strong id="detailPath">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>HTTP Status</span>
+                        <strong id="detailStatusCode">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Failed Requests</span>
+                        <strong id="detailFailedRequests">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Request Count</span>
+                        <strong id="detailRequestCount">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Matched Pattern</span>
+                        <strong id="detailMatchedPattern">-</strong>
                     </div>
 
                     <div class="investigation-item">
@@ -947,6 +1191,12 @@
     data-low="{{ summary.low_alerts }}"
     data-successful="{{ summary.successful_logins }}"
     data-failed="{{ summary.failed_logins }}"
+    data-ssh-events="{{ summary.ssh_events }}"
+    data-web-events="{{ summary.web_events }}"
+    data-http2xx="{{ summary.http_2xx }}"
+data-http3xx="{{ summary.http_3xx }}"
+data-http4xx="{{ summary.http_4xx }}"
+data-http5xx="{{ summary.http_5xx }}"
     data-top-ips='{{ summary.top_attacking_ips | tojson }}'
     style="display: none;"
 ></div>
@@ -976,6 +1226,24 @@ const successfulLogins =
 
 const failedLogins =
     Number(dashboardData.dataset.failed);
+
+const sshEvents =
+    Number(dashboardData.dataset.sshEvents);
+
+const webEvents =
+    Number(dashboardData.dataset.webEvents);
+
+const http2xx =
+    Number(dashboardData.dataset.http2xx);
+
+const http3xx =
+    Number(dashboardData.dataset.http3xx);
+
+const http4xx =
+    Number(dashboardData.dataset.http4xx);
+
+const http5xx =
+    Number(dashboardData.dataset.http5xx);
 
         const severityCanvas =
             document.getElementById(
@@ -1056,24 +1324,63 @@ const failedLogins =
 
                 data: {
 
-                    labels: [
-                        "Successful",
-                        "Failed"
-                    ],
+                    labels:
+                        (
+                            webEvents > 0
+                            && sshEvents === 0
+                        )
+                        ? [
+                            "2xx",
+                            "3xx",
+                            "4xx",
+                            "5xx"
+                        ]
+                        : [
+                            "Successful",
+                            "Failed"
+                        ],
 
                     datasets: [
                         {
-                            label: "Login Events",
+                            label:
+                                (
+                                    webEvents > 0
+                                    && sshEvents === 0
+                                )
+                                ? "HTTP Responses"
+                                : "Login Events",
 
-                            data: [
-    successfulLogins,
-    failedLogins
-],
+                            data:
+                                (
+                                    webEvents > 0
+                                    && sshEvents === 0
+                                )
+                                ? [
+                                    http2xx,
+                                    http3xx,
+                                    http4xx,
+                                    http5xx
+                                ]
+                                : [
+                                    successfulLogins,
+                                    failedLogins
+                                ],
 
-                            backgroundColor: [
-                                "#3dd598",
-                                "#ff5964"
-                            ],
+                            backgroundColor:
+                                (
+                                    webEvents > 0
+                                    && sshEvents === 0
+                                )
+                                ? [
+                                    "#3dd598",
+                                    "#4f8cff",
+                                    "#ff8c42",
+                                    "#ff5964"
+                                ]
+                                : [
+                                    "#3dd598",
+                                    "#ff5964"
+                                ],
 
                             borderRadius: 8,
 
@@ -1223,7 +1530,19 @@ const ipData =
                     "The same source IP attempted authentication against multiple different user accounts within a short period.",
 
                 "Targeted Account Attack":
-                    "The same user account was targeted by failed authentication attempts from multiple different source IP addresses."
+                    "The same user account was targeted by failed authentication attempts from multiple different source IP addresses.",
+
+                "Web Path Scanning":
+                    "A single source IP requested many different web paths within a short time window, which can indicate automated reconnaissance or directory scanning.",
+
+                "Sensitive File Access":
+                    "A request targeted a sensitive or commonly exposed web path such as an environment file, configuration file, administration path, or server-status endpoint.",
+
+                "404 Scanning Activity":
+                    "A source IP generated multiple HTTP 404 responses within a short time window, which can indicate automated path discovery or scanning.",
+
+                "HTTP Request Flood":
+                    "A high number of HTTP requests originated from the same source IP within a short time window, which may indicate abusive automation or denial-of-service activity."
             };
 
             return (
@@ -1296,6 +1615,30 @@ const ipData =
                         document.getElementById(
                             "detailPreviousFailures"
                         ).textContent = data.previousFailures;
+
+                        document.getElementById(
+                            "detailMethod"
+                        ).textContent = data.method;
+
+                        document.getElementById(
+                            "detailPath"
+                        ).textContent = data.path;
+
+                        document.getElementById(
+                            "detailStatusCode"
+                        ).textContent = data.statusCode;
+
+                        document.getElementById(
+                            "detailFailedRequests"
+                        ).textContent = data.failedRequests;
+
+                        document.getElementById(
+                            "detailRequestCount"
+                        ).textContent = data.requestCount;
+
+                        document.getElementById(
+                            "detailMatchedPattern"
+                        ).textContent = data.matchedPattern;
 
                         document.getElementById(
                             "detailTimeWindow"
@@ -1389,7 +1732,11 @@ function filterAlerts() {
                 data.mitreId,
                 data.mitreName,
                 data.riskScore,
-                data.riskLevel
+                data.riskLevel,
+                data.method,
+                data.path,
+                data.statusCode,
+                data.matchedPattern
             ]
                 .join(" ")
                 .toLowerCase();
