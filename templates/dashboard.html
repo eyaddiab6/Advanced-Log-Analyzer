@@ -168,6 +168,120 @@
     {% endif %}
 
 </section>
+{% if summary.highest_risk_alert %}
+
+<section class="highest-risk-panel">
+
+    <div class="highest-risk-info">
+
+        <p class="eyebrow">
+            HIGHEST RISK DETECTION
+        </p>
+
+        <h2>
+            {{ summary.highest_risk_alert.type }}
+        </h2>
+
+        <p>
+            {{ summary.highest_risk_alert.alert_id }}
+            •
+            {{ summary.highest_risk_alert.ip }}
+            •
+            {{ summary.highest_risk_alert.username or "N/A" }}
+        </p>
+
+    </div>
+
+
+    <div class="highest-risk-score">
+
+        <span>
+            Risk Score
+        </span>
+
+        <strong>
+            {{ summary.highest_risk_alert.risk_score }}/100
+        </strong>
+
+        <div
+            class="
+                risk-level-large
+                risk-{{ summary.highest_risk_alert.risk_level|lower }}
+            "
+        >
+            {{ summary.highest_risk_alert.risk_level }}
+        </div>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+            <section class="timeline-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Security Timeline</h2>
+                        <p>
+                            Chronological view of authentication activity
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline">
+
+                    {% for event in events %}
+
+                        <div class="timeline-item">
+
+                            <div
+                                class="
+                                    timeline-marker
+                                    timeline-{{ event.status }}
+                                "
+                            ></div>
+
+                            <div class="timeline-content">
+
+                                <div class="timeline-top">
+
+                                    <strong>
+                                        {{ event.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
+                                    </strong>
+
+                                    <span
+                                        class="
+                                            timeline-status
+                                            status-{{ event.status }}
+                                        "
+                                    >
+                                        {{ event.status|upper }}
+                                    </span>
+
+                                </div>
+
+                                <p>
+                                    User:
+                                    <strong>
+                                        {{ event.username }}
+                                    </strong>
+
+                                    • IP:
+                                    <strong>
+                                        {{ event.ip }}
+                                    </strong>
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
 
             <section class="cards">
 
@@ -536,6 +650,7 @@
                                 <th>Alert ID</th>
                                 <th>Type</th>
                                 <th>Severity</th>
+                                <th>Risk</th>
                                 <th>Source IP</th>
                                 <th>User</th>
                                 <th>MITRE</th>
@@ -556,6 +671,8 @@
     data-alert-id="{{ alert.alert_id }}"
     data-type="{{ alert.type }}"
     data-severity="{{ alert.severity }}"
+    data-risk-score="{{ alert.risk_score }}"
+    data-risk-level="{{ alert.risk_level }}"
     data-ip="{{ alert.ip }}"
     data-username="{{ alert.username or '-' }}"
     data-mitre-id="{{ alert.mitre_id }}"
@@ -588,6 +705,17 @@
                                             {{ alert.severity }}
                                         </span>
 
+                                    </td>
+
+                                    <td>
+                                        <span
+                                            class="
+                                                risk-badge
+                                                risk-{{ alert.risk_level|lower }}
+                                            "
+                                        >
+                                            {{ alert.risk_score }}/100
+                                        </span>
                                     </td>
 
                                     <td>
@@ -688,6 +816,11 @@
                     </div>
 
                     <div class="investigation-item">
+                        <span>Risk Score</span>
+                        <strong id="detailRiskScore">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
                         <span>Status</span>
                         <strong id="detailStatus">-</strong>
                     </div>
@@ -753,7 +886,10 @@
 
                     <div class="report-grid">
 
-                        <div class="report-card">
+                        <a
+                            href="{{ url_for('download_json_report') }}"
+                            class="report-card report-link"
+                        >
 
                             <div class="report-icon">
                                 JSON
@@ -769,10 +905,13 @@
                                 </p>
                             </div>
 
-                        </div>
+                        </a>
 
 
-                        <div class="report-card">
+                        <a
+                            href="{{ url_for('download_csv_report') }}"
+                            class="report-card report-link"
+                        >
 
                             <div class="report-icon">
                                 CSV
@@ -788,7 +927,7 @@
                                 </p>
                             </div>
 
-                        </div>
+                        </a>
 
                     </div>
 
@@ -1142,6 +1281,11 @@ const ipData =
                         ).textContent = data.occurrences;
 
                         document.getElementById(
+                            "detailRiskScore"
+                        ).textContent =
+                            `${data.riskScore}/100 - ${data.riskLevel}`;
+
+                        document.getElementById(
                             "detailStatus"
                         ).textContent = data.status;
 
@@ -1243,7 +1387,9 @@ function filterAlerts() {
                 data.ip,
                 data.username,
                 data.mitreId,
-                data.mitreName
+                data.mitreName,
+                data.riskScore,
+                data.riskLevel
             ]
                 .join(" ")
                 .toLowerCase();

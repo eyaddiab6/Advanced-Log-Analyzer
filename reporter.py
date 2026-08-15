@@ -65,12 +65,21 @@ def generate_summary(events, alerts):
         top_suspicious_ip, top_suspicious_ip_alerts = (
             alert_ip_counts.most_common(1)[0]
         )
+        highest_risk_alert = None
 
+    if alerts:
+        highest_risk_alert = max(
+        alerts,
+        key=lambda alert: alert.get(
+            "risk_score",
+            0
+        )
+    )
     return {
         "total_events": total_events,
         "successful_logins": successful_logins,
         "failed_logins": failed_logins,
-
+        "highest_risk_alert": highest_risk_alert,
         "unique_alerts": len(alerts),
         "total_alert_occurrences": total_alert_occurrences,
 
@@ -311,7 +320,9 @@ def export_alerts_csv(
         "source_ips",
         "occurrences",
         "first_seen",
-        "last_seen"
+        "last_seen",""
+        "risk_score",
+        "risk_level",
     ]
 
     with open(

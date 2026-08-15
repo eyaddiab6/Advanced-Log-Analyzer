@@ -114,7 +114,12 @@ if alerts:
             print(f"First Seen: {alert['first_seen']}")
 
         if "last_seen" in alert:
-            print(f"Last Seen: {alert['last_seen']}")    
+            print(f"Last Seen: {alert['last_seen']}")   
+        if "risk_score" in alert:
+             print(f"Risk Score: {alert['risk_score']}/100")
+
+        if "risk_level" in alert:
+            print(f"Risk Level: {alert['risk_level']}") 
 
     print("\n------------------------------")
 

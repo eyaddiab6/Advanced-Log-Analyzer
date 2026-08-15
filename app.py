@@ -4,8 +4,7 @@ from flask import (
     Flask,
     render_template,
     request,
-    redirect,
-    url_for
+    send_file
 )
 
 from werkzeug.utils import secure_filename
@@ -213,7 +212,32 @@ def dashboard():
         upload_message=upload_message,
         upload_error=upload_error
     )
+@app.route("/download/json")
+def download_json_report():
+    file_path = os.path.join(
+        "reports",
+        "security_report.json"
+    )
 
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name="security_report.json"
+    )
+
+
+@app.route("/download/csv")
+def download_csv_report():
+    file_path = os.path.join(
+        "reports",
+        "alerts.csv"
+    )
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name="alerts.csv"
+    )
 
 if __name__ == "__main__":
 

@@ -1351,3 +1351,295 @@ tbody tr:hover {
     }
 
 }
+/* =========================
+   Risk Score
+========================= */
+
+.risk-badge {
+    display: inline-block;
+    padding: 4px 7px;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.risk-critical {
+    background: rgba(255, 77, 94, 0.15);
+    color: #ff6573;
+}
+
+.risk-high {
+    background: rgba(255, 140, 66, 0.15);
+    color: #ff984f;
+}
+
+.risk-medium {
+    background: rgba(244, 197, 66, 0.16);
+    color: #f4cd55;
+}
+
+.risk-low {
+    background: rgba(61, 213, 152, 0.14);
+    color: #4bdba5;
+}
+/* =========================
+   Highest Risk Alert
+========================= */
+
+.highest-risk-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    margin-bottom: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(39, 20, 28, 0.96),
+            rgba(16, 23, 35, 0.96)
+        );
+
+    border:
+        1px solid rgba(
+            255,
+            77,
+            94,
+            0.35
+        );
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.15);
+}
+
+
+.highest-risk-info h2 {
+    font-size: 18px;
+
+    margin-bottom: 6px;
+}
+
+
+.highest-risk-info > p:last-child {
+    color: #8291a7;
+
+    font-size: 11px;
+}
+
+
+.highest-risk-score {
+    text-align: right;
+}
+
+
+.highest-risk-score span {
+    display: block;
+
+    color: #78889e;
+
+    font-size: 9px;
+
+    text-transform: uppercase;
+
+    margin-bottom: 5px;
+}
+
+
+.highest-risk-score strong {
+    display: block;
+
+    font-size: 26px;
+
+    margin-bottom: 6px;
+}
+
+
+.risk-level-large {
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    border-radius: 6px;
+
+    font-size: 9px;
+
+    font-weight: 700;
+}
+
+
+@media (max-width: 700px) {
+
+    .highest-risk-panel {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+
+    .highest-risk-score {
+        text-align: left;
+    }
+
+} 
+/* =========================
+   Security Timeline
+========================= */
+
+.timeline-panel {
+    background:
+        rgba(14, 23, 35, 0.96);
+
+    border:
+        1px solid #203149;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+}
+
+
+.timeline {
+    position: relative;
+
+    padding-left: 24px;
+
+    max-height: 420px;
+
+    overflow-y: auto;
+}
+
+
+.timeline::before {
+    content: "";
+
+    position: absolute;
+
+    left: 7px;
+
+    top: 0;
+
+    bottom: 0;
+
+    width: 2px;
+
+    background: #23344d;
+}
+
+
+.timeline-item {
+    position: relative;
+
+    margin-bottom: 16px;
+}
+
+
+.timeline-marker {
+    position: absolute;
+
+    left: -22px;
+
+    top: 6px;
+
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    border: 2px solid #0e1723;
+}
+
+
+.timeline-success {
+    background: #3dd598;
+
+    box-shadow:
+        0 0 10px
+        rgba(61, 213, 152, 0.5);
+}
+
+
+.timeline-failed {
+    background: #ff5964;
+
+    box-shadow:
+        0 0 10px
+        rgba(255, 89, 100, 0.5);
+}
+
+
+.timeline-content {
+    background: #0b1521;
+
+    border:
+        1px solid #1d2d42;
+
+    border-radius: 8px;
+
+    padding: 12px 14px;
+}
+
+
+.timeline-top {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 7px;
+}
+
+
+.timeline-top strong {
+    font-size: 11px;
+}
+
+
+.timeline-content p {
+    color: #7e8fa6;
+
+    font-size: 10px;
+}
+
+
+.timeline-content p strong {
+    color: #d5deea;
+}
+
+
+.timeline-status {
+    padding: 4px 7px;
+
+    border-radius: 5px;
+
+    font-size: 8px;
+
+    font-weight: 700;
+}
+
+
+.status-success {
+    background:
+        rgba(61, 213, 152, 0.14);
+
+    color: #4bdba5;
+}
+
+
+.status-failed {
+    background:
+        rgba(255, 89, 100, 0.14);
+
+    color: #ff6974;
+}

@@ -417,7 +417,88 @@ def apply_trusted_ip_reduction(
 
     return alerts
 
+def calculate_risk_score(alert):
+    score = 0
 
+    severity_base = {
+        "LOW": 20,
+        "MEDIUM": 40,
+        "HIGH": 65,
+        "CRITICAL": 85
+    }
+
+    score += severity_base.get(
+        alert.get("severity"),
+        0
+    )
+
+    alert_type = alert.get("type", "")
+    username = alert.get("username", "")
+    occurrences = alert.get(
+        "occurrences",
+        1
+    )
+
+    if alert_type == "Successful Login After Multiple Failures":
+        score += 10
+
+    elif alert_type == "Password Spraying Attack":
+        score += 8
+
+    elif alert_type == "Brute Force Attack":
+        score += 6
+
+    elif alert_type == "Root Login Attempt":
+        score += 8
+
+    elif alert_type == "Targeted Account Attack":
+        score += 7
+
+    elif alert_type == "Off-Hours Login":
+        score += 4
+
+
+    if username.lower() == "root":
+        score += 8
+
+
+    if occurrences > 1:
+        score += min(
+            occurrences * 2,
+            10
+        )
+
+
+    if alert.get("trusted_ip"):
+        score -= 15
+
+
+    score = max(
+        0,
+        min(
+            score,
+            100
+        )
+    )
+
+
+    if score >= 85:
+        risk_level = "CRITICAL"
+
+    elif score >= 65:
+        risk_level = "HIGH"
+
+    elif score >= 40:
+        risk_level = "MEDIUM"
+
+    else:
+        risk_level = "LOW"
+
+
+    alert["risk_score"] = score
+    alert["risk_level"] = risk_level
+
+    return alert
 def add_alert_metadata(alerts):
     severity_order = {
         "LOW": 1,
@@ -441,9 +522,11 @@ def add_alert_metadata(alerts):
             )
         )
 
-    return alerts
+        calculate_risk_score(
+            alert
+        )
 
-
+    return alerts 
 def run_all_detections(
     events,
     config_path="config.json"
