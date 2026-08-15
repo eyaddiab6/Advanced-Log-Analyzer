@@ -1,0 +1,7 @@
+Aug 15 20:00:01 server sshd[4001]: Failed password for admin from 8.8.8.8 port 50001 ssh2
+Aug 15 20:00:10 server sshd[4002]: Failed password for admin from 8.8.8.8 port 50002 ssh2
+Aug 15 20:00:20 server sshd[4003]: Failed password for admin from 8.8.8.8 port 50003 ssh2
+Aug 15 20:00:30 server sshd[4004]: Failed password for root from 8.8.8.8 port 50004 ssh2
+Aug 15 20:00:40 server sshd[4005]: Failed password for guest from 8.8.8.8 port 50005 ssh2
+Aug 15 20:00:50 server sshd[4006]: Failed password for test from 8.8.8.8 port 50006 ssh2
+Aug 15 20:01:00 server sshd[4007]: Accepted password for admin from 8.8.8.8 port 50007 ssh2

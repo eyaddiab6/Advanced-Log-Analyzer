@@ -1,0 +1,43 @@
+{
+    "brute_force": {
+        "enabled": true,
+        "threshold": 3,
+        "time_window": 60
+    },
+
+    "success_after_failures": {
+        "enabled": true,
+        "threshold": 3,
+        "time_window": 120
+    },
+
+    "password_spraying": {
+        "enabled": true,
+        "user_threshold": 3,
+        "time_window": 120
+    },
+
+    "targeted_account": {
+        "enabled": true,
+        "ip_threshold": 3,
+        "time_window": 300
+    },
+
+    "off_hours": {
+        "enabled": true,
+        "start_hour": 0,
+        "end_hour": 5
+    },
+
+    "root_login": {
+        "enabled": true
+    },
+
+    "trusted_ips": [
+        "192.168.1.20"
+    ],
+
+    "aggregation": {
+        "time_window": 600
+    }
+}

@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Advanced Log Analyzer</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-icon">A</div>
+
+                <div>
+                    <h2>ALA</h2>
+                    <p>Security Center</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <a href="#" class="nav-item active">
+                    <span>◈</span>
+                    Dashboard
+                </a>
+
+                <a href="#alerts" class="nav-item">
+                    <span>⚠</span>
+                    Alerts
+                </a>
+
+                <a href="#reports" class="nav-item">
+                    <span>▣</span>
+                    Reports
+                </a>
+
+                <a href="#mitre" class="nav-item">
+                    <span>◎</span>
+                    MITRE ATT&CK
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="engine-status">
+                    <span class="status-dot"></span>
+
+                    <div>
+                        <strong>Detection Engine</strong>
+                        <p>Online</p>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+
+        <main class="main-content">
+
+            <header class="topbar">
+
+                <div>
+                    <p class="eyebrow">
+                        SECURITY OPERATIONS CENTER
+                    </p>
+
+                    <h1>
+                        Advanced Log Analyzer
+                    </h1>
+
+                    <p class="subtitle">
+                        Real-time SSH security monitoring and threat detection
+                    </p>
+                </div>
+
+                <div class="topbar-status">
+                    <span class="status-dot"></span>
+                    Detection Engine Active
+                </div>
+
+            </header>
+<section class="upload-panel">
+
+    <div class="upload-info">
+
+        <p class="eyebrow">
+            LOG ANALYSIS
+        </p>
+
+        <h2>
+            Analyze Log File
+        </h2>
+
+        <p>
+            Upload a Linux SSH authentication
+            log and run the detection engine.
+        </p>
+
+        <div class="current-file">
+            Current file:
+            <strong>
+                {{ selected_file }}
+            </strong>
+        </div>
+
+    </div>
+
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        class="upload-form"
+    >
+
+        <label class="file-input">
+
+            <input
+                type="file"
+                name="log_file"
+                accept=".log,.txt"
+                required
+            >
+
+            <span>
+                Choose Log File
+            </span>
+
+        </label>
+
+
+        <button
+            type="submit"
+            class="analyze-button"
+        >
+            Analyze Logs
+        </button>
+
+    </form>
+
+
+    {% if upload_message %}
+
+        <div class="upload-message success-message">
+            {{ upload_message }}
+        </div>
+
+    {% endif %}
+
+
+    {% if upload_error %}
+
+        <div class="upload-message error-message">
+            {{ upload_error }}
+        </div>
+
+    {% endif %}
+
+</section>
+
+            <section class="cards">
+
+                <div class="card">
+                    <p>Total Events</p>
+                    <h2>{{ summary.total_events }}</h2>
+                    <span class="card-description">
+                        Parsed log events
+                    </span>
+                </div>
+
+                <div class="card">
+                    <p>Unique Alerts</p>
+                    <h2>{{ summary.unique_alerts }}</h2>
+                    <span class="card-description">
+                        Aggregated detections
+                    </span>
+                </div>
+
+                <div class="card">
+                    <p>Alert Occurrences</p>
+                    <h2>
+                        {{ summary.total_alert_occurrences }}
+                    </h2>
+                    <span class="card-description">
+                        Total threat activity
+                    </span>
+                </div>
+
+                <div class="card critical-card">
+                    <p>Critical Alerts</p>
+                    <h2>{{ summary.critical_alerts }}</h2>
+                    <span class="card-description">
+                        Highest priority
+                    </span>
+                </div>
+
+                <div class="card high-card">
+                    <p>High Alerts</p>
+                    <h2>{{ summary.high_alerts }}</h2>
+                    <span class="card-description">
+                        High risk detections
+                    </span>
+                </div>
+
+                <div class="card medium-card">
+                    <p>Medium Alerts</p>
+                    <h2>{{ summary.medium_alerts }}</h2>
+                    <span class="card-description">
+                        Needs investigation
+                    </span>
+                </div>
+
+            </section>
+
+
+            <section class="charts-grid">
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Alerts by Severity</h2>
+                            <p>
+                                Distribution of detected threats
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+
+                </div>
+
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Login Activity</h2>
+                            <p>
+                                Successful vs failed authentication
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="loginChart"></canvas>
+                    </div>
+
+                </div>
+
+
+                <div class="panel chart-panel wide-chart">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Top Attacking IPs</h2>
+                            <p>
+                                Alert occurrences by source
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container horizontal-chart">
+                        <canvas id="ipChart"></canvas>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="info-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h2>Top Attacking IPs</h2>
+                    </div>
+
+                    {% if summary.top_attacking_ips %}
+
+                        {% for ip, count in summary.top_attacking_ips %}
+
+                            <div class="list-row">
+
+                                <div>
+                                    <strong>{{ ip }}</strong>
+                                    <p>
+                                        Suspicious source
+                                    </p>
+                                </div>
+
+                                <span class="badge">
+                                    {{ count }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <p class="empty">
+                            No attacking IPs detected.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h2>Most Targeted Users</h2>
+                    </div>
+
+                    {% if summary.most_targeted_users %}
+
+                        {% for username, count in summary.most_targeted_users %}
+
+                            <div class="list-row">
+
+                                <div>
+                                    <strong>{{ username }}</strong>
+                                    <p>
+                                        Failed login attempts
+                                    </p>
+                                </div>
+
+                                <span class="badge">
+                                    {{ count }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <p class="empty">
+                            No targeted users detected.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="panel" id="mitre">
+
+                    <div class="panel-header">
+                        <h2>MITRE ATT&CK</h2>
+                    </div>
+
+                    {% if summary.mitre_summary %}
+
+                        {% for technique in summary.mitre_summary %}
+
+                            <div class="mitre-row">
+
+                                <div>
+                                    <strong>
+                                        {{ technique.mitre_id }}
+                                    </strong>
+
+                                    <p>
+                                        {{ technique.mitre_name }}
+                                    </p>
+                                </div>
+
+                                <span class="badge">
+                                    {{ technique.alerts }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <p class="empty">
+                            No MITRE techniques detected.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h2>Login Statistics</h2>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Successful Logins</span>
+
+                        <strong class="success-text">
+                            {{ summary.successful_logins }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Failed Logins</span>
+
+                        <strong class="danger-text">
+                            {{ summary.failed_logins }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Top Suspicious IP</span>
+
+                        <strong>
+                            {{ summary.top_suspicious_ip or "None" }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Alert Occurrences</span>
+
+                        <strong>
+                            {{ summary.total_alert_occurrences }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section
+                class="alerts-panel"
+                id="alerts"
+            >
+
+                <div class="panel-header alerts-header">
+
+                    <div>
+                        <h2>Security Alerts</h2>
+
+                        <p>
+                            Detected suspicious activity and security events
+                        </p>
+                    </div>
+
+                    <div class="alert-count">
+                        {{ summary.unique_alerts }} alerts
+                    </div>
+
+                </div>
+                <div class="alert-controls">
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="alertSearch"
+            placeholder="Search by Alert ID, IP, username, type..."
+        >
+
+    </div>
+
+
+    <div class="filter-box">
+
+        <select id="severityFilter">
+
+            <option value="all">
+                All Severities
+            </option>
+
+            <option value="critical">
+                Critical
+            </option>
+
+            <option value="high">
+                High
+            </option>
+
+            <option value="medium">
+                Medium
+            </option>
+
+            <option value="low">
+                Low
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <button
+        type="button"
+        id="clearFilters"
+        class="clear-filter-button"
+    >
+        Clear Filters
+    </button>
+
+
+    <div class="visible-alert-count">
+        Showing
+        <strong id="visibleAlertCount">
+            {{ summary.unique_alerts }}
+        </strong>
+        alerts
+    </div>
+
+</div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Alert ID</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Source IP</th>
+                                <th>User</th>
+                                <th>MITRE</th>
+                                <th>Occurrences</th>
+                                <th>First Seen</th>
+                                <th>Last Seen</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for alert in alerts %}
+
+                                <tr
+    class="alert-row"
+    data-alert-id="{{ alert.alert_id }}"
+    data-type="{{ alert.type }}"
+    data-severity="{{ alert.severity }}"
+    data-ip="{{ alert.ip }}"
+    data-username="{{ alert.username or '-' }}"
+    data-mitre-id="{{ alert.mitre_id }}"
+    data-mitre-name="{{ alert.mitre_name }}"
+    data-occurrences="{{ alert.occurrences }}"
+    data-first-seen="{{ alert.first_seen or '-' }}"
+    data-last-seen="{{ alert.last_seen or '-' }}"
+    data-status="{{ alert.status or '-' }}"
+    data-failed-attempts="{{ alert.failed_attempts or '-' }}"
+    data-previous-failures="{{ alert.previous_failures or '-' }}"
+    data-time-window="{{ alert.time_window or '-' }}"
+>
+
+                                    <td class="alert-id">
+                                        {{ alert.alert_id }}
+                                    </td>
+
+                                    <td>
+                                        {{ alert.type }}
+                                    </td>
+
+                                    <td>
+
+                                        <span
+                                            class="
+                                                severity
+                                                severity-{{ alert.severity|lower }}
+                                            "
+                                        >
+                                            {{ alert.severity }}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        {{ alert.ip }}
+                                    </td>
+
+                                    <td>
+                                        {{ alert.username or "-" }}
+                                    </td>
+
+                                    <td>
+                                        <span class="mitre-badge">
+                                            {{ alert.mitre_id }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {{ alert.occurrences }}
+                                    </td>
+
+                                    <td>
+                                        {{ alert.first_seen or "-" }}
+                                    </td>
+
+                                    <td>
+                                        {{ alert.last_seen or "-" }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <section
+                class="investigation-panel"
+                id="investigationPanel"
+            >
+
+                <div class="investigation-header">
+
+                    <div>
+                        <p class="eyebrow">
+                            ALERT INVESTIGATION
+                        </p>
+
+                        <h2 id="investigationTitle">
+                            Select an alert
+                        </h2>
+
+                        <p id="investigationSubtitle">
+                            Click any alert in the table to inspect its details.
+                        </p>
+                    </div>
+
+                    <span
+                        id="investigationSeverity"
+                        class="severity"
+                    >
+                        -
+                    </span>
+
+                </div>
+
+
+                <div class="investigation-grid">
+
+                    <div class="investigation-item">
+                        <span>Alert ID</span>
+                        <strong id="detailAlertId">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Source IP</span>
+                        <strong id="detailIp">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Username</span>
+                        <strong id="detailUsername">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>MITRE Technique</span>
+                        <strong id="detailMitre">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Occurrences</span>
+                        <strong id="detailOccurrences">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Status</span>
+                        <strong id="detailStatus">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Failed Attempts</span>
+                        <strong id="detailFailedAttempts">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Previous Failures</span>
+                        <strong id="detailPreviousFailures">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Time Window</span>
+                        <strong id="detailTimeWindow">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>First Seen</span>
+                        <strong id="detailFirstSeen">-</strong>
+                    </div>
+
+                    <div class="investigation-item">
+                        <span>Last Seen</span>
+                        <strong id="detailLastSeen">-</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="investigation-reason">
+
+                    <span>Detection Explanation</span>
+
+                    <p id="detailReason">
+                        Select an alert to view why the detection engine triggered it.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <section
+                class="reports-section"
+                id="reports"
+            >
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Generated Reports</h2>
+                            <p>
+                                Security analysis output
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <div class="report-grid">
+
+                        <div class="report-card">
+
+                            <div class="report-icon">
+                                JSON
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Security Report
+                                </strong>
+
+                                <p>
+                                    reports/security_report.json
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="report-card">
+
+                            <div class="report-icon">
+                                CSV
+                            </div>
+
+                            <div>
+                                <strong>
+                                    Alerts Export
+                                </strong>
+
+                                <p>
+                                    reports/alerts.csv
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+<div
+    id="dashboard-data"
+    data-critical="{{ summary.critical_alerts }}"
+    data-high="{{ summary.high_alerts }}"
+    data-medium="{{ summary.medium_alerts }}"
+    data-low="{{ summary.low_alerts }}"
+    data-successful="{{ summary.successful_logins }}"
+    data-failed="{{ summary.failed_logins }}"
+    data-top-ips='{{ summary.top_attacking_ips | tojson }}'
+    style="display: none;"
+></div>
+    <script>
+
+        Chart.defaults.color = "#93a4bb";
+
+        Chart.defaults.borderColor =
+            "rgba(120, 140, 170, 0.12)";
+const dashboardData =
+    document.getElementById("dashboard-data");
+
+const criticalAlerts =
+    Number(dashboardData.dataset.critical);
+
+const highAlerts =
+    Number(dashboardData.dataset.high);
+
+const mediumAlerts =
+    Number(dashboardData.dataset.medium);
+
+const lowAlerts =
+    Number(dashboardData.dataset.low);
+
+const successfulLogins =
+    Number(dashboardData.dataset.successful);
+
+const failedLogins =
+    Number(dashboardData.dataset.failed);
+
+        const severityCanvas =
+            document.getElementById(
+                "severityChart"
+            );
+
+
+        new Chart(
+            severityCanvas,
+            {
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+                        "Critical",
+                        "High",
+                        "Medium",
+                        "Low"
+                    ],
+
+                    datasets: [
+                        {
+                            data: [
+    criticalAlerts,
+    highAlerts,
+    mediumAlerts,
+    lowAlerts
+],
+                            backgroundColor: [
+                                "#ff4d5e",
+                                "#ff8c42",
+                                "#f4c542",
+                                "#3dd598"
+                            ],
+
+                            borderWidth: 0,
+
+                            hoverOffset: 6
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: "70%",
+
+                    plugins: {
+
+                        legend: {
+                            position: "bottom",
+
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+
+        const loginCanvas =
+            document.getElementById(
+                "loginChart"
+            );
+
+
+        new Chart(
+            loginCanvas,
+            {
+                type: "bar",
+
+                data: {
+
+                    labels: [
+                        "Successful",
+                        "Failed"
+                    ],
+
+                    datasets: [
+                        {
+                            label: "Login Events",
+
+                            data: [
+    successfulLogins,
+    failedLogins
+],
+
+                            backgroundColor: [
+                                "#3dd598",
+                                "#ff5964"
+                            ],
+
+                            borderRadius: 8,
+
+                            borderSkipped: false
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+                    },
+
+                    scales: {
+
+                        y: {
+                            beginAtZero: true,
+
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+
+       const topAttackingIps =
+    JSON.parse(
+        dashboardData.dataset.topIps
+    );
+
+const ipLabels =
+    topAttackingIps.map(
+        item => item[0]
+    );
+
+const ipData =
+    topAttackingIps.map(
+        item => item[1]
+    );
+
+
+        const ipCanvas =
+            document.getElementById(
+                "ipChart"
+            );
+
+
+        new Chart(
+            ipCanvas,
+            {
+                type: "bar",
+
+                data: {
+
+                    labels: ipLabels,
+
+                    datasets: [
+                        {
+                            label:
+                                "Alert Occurrences",
+
+                            data: ipData,
+
+                            backgroundColor:
+                                "#4f8cff",
+
+                            borderRadius: 8,
+
+                            borderSkipped: false
+                        }
+                    ]
+                },
+
+                options: {
+
+                    indexAxis: "y",
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+                    },
+
+                    scales: {
+
+                        x: {
+                            beginAtZero: true,
+
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+
+        const alertRows =
+            document.querySelectorAll(
+                ".alert-row"
+            );
+
+        function getDetectionReason(type) {
+            const reasons = {
+                "Brute Force Attack":
+                    "Multiple failed login attempts were detected against the same account from the same source IP within the configured time window.",
+
+                "Successful Login After Multiple Failures":
+                    "A successful authentication occurred after several failed login attempts from the same source IP against the same user account.",
+
+                "Root Login Attempt":
+                    "An authentication attempt targeted the privileged root account, which may indicate an attempt to gain elevated access.",
+
+                "Off-Hours Login":
+                    "A successful login occurred during the configured off-hours period and may require investigation.",
+
+                "Password Spraying Attack":
+                    "The same source IP attempted authentication against multiple different user accounts within a short period.",
+
+                "Targeted Account Attack":
+                    "The same user account was targeted by failed authentication attempts from multiple different source IP addresses."
+            };
+
+            return (
+                reasons[type]
+                || "Suspicious activity matched one of the configured detection rules."
+            );
+        }
+
+        alertRows.forEach(
+            row => {
+                row.addEventListener(
+                    "click",
+                    () => {
+                        const data = row.dataset;
+
+                        document.getElementById(
+                            "investigationTitle"
+                        ).textContent = data.type;
+
+                        document.getElementById(
+                            "investigationSubtitle"
+                        ).textContent =
+                            `${data.ip} • ${data.username}`;
+
+                        const severityElement =
+                            document.getElementById(
+                                "investigationSeverity"
+                            );
+
+                        severityElement.textContent =
+                            data.severity;
+
+                        severityElement.className =
+                            `severity severity-${data.severity.toLowerCase()}`;
+
+                        document.getElementById(
+                            "detailAlertId"
+                        ).textContent = data.alertId;
+
+                        document.getElementById(
+                            "detailIp"
+                        ).textContent = data.ip;
+
+                        document.getElementById(
+                            "detailUsername"
+                        ).textContent = data.username;
+
+                        document.getElementById(
+                            "detailMitre"
+                        ).textContent =
+                            `${data.mitreId} - ${data.mitreName}`;
+
+                        document.getElementById(
+                            "detailOccurrences"
+                        ).textContent = data.occurrences;
+
+                        document.getElementById(
+                            "detailStatus"
+                        ).textContent = data.status;
+
+                        document.getElementById(
+                            "detailFailedAttempts"
+                        ).textContent = data.failedAttempts;
+
+                        document.getElementById(
+                            "detailPreviousFailures"
+                        ).textContent = data.previousFailures;
+
+                        document.getElementById(
+                            "detailTimeWindow"
+                        ).textContent = data.timeWindow;
+
+                        document.getElementById(
+                            "detailFirstSeen"
+                        ).textContent = data.firstSeen;
+
+                        document.getElementById(
+                            "detailLastSeen"
+                        ).textContent = data.lastSeen;
+
+                        document.getElementById(
+                            "detailReason"
+                        ).textContent =
+                            getDetectionReason(
+                                data.type
+                            );
+
+                        document.querySelectorAll(
+                            ".alert-row.selected"
+                        ).forEach(
+                            selectedRow => {
+                                selectedRow.classList.remove(
+                                    "selected"
+                                );
+                            }
+                        );
+
+                        row.classList.add(
+                            "selected"
+                        );
+
+                        document.getElementById(
+                            "investigationPanel"
+                        ).scrollIntoView({
+                            behavior: "smooth",
+                            block: "center"
+                        });
+                    }
+                );
+            }
+        );
+const alertSearch =
+    document.getElementById(
+        "alertSearch"
+    );
+
+const severityFilter =
+    document.getElementById(
+        "severityFilter"
+    );
+
+const clearFiltersButton =
+    document.getElementById(
+        "clearFilters"
+    );
+
+const visibleAlertCount =
+    document.getElementById(
+        "visibleAlertCount"
+    );
+
+
+function filterAlerts() {
+
+    const searchValue =
+        alertSearch.value
+            .toLowerCase()
+            .trim();
+
+    const severityValue =
+        severityFilter.value
+            .toLowerCase();
+
+
+    let visibleCount = 0;
+
+
+    alertRows.forEach(
+        row => {
+
+            const data = row.dataset;
+
+            const searchableText = [
+                data.alertId,
+                data.type,
+                data.ip,
+                data.username,
+                data.mitreId,
+                data.mitreName
+            ]
+                .join(" ")
+                .toLowerCase();
+
+
+            const matchesSearch =
+                searchableText.includes(
+                    searchValue
+                );
+
+
+            const matchesSeverity =
+                severityValue === "all"
+                || data.severity.toLowerCase()
+                    === severityValue;
+
+
+            if (
+                matchesSearch
+                && matchesSeverity
+            ) {
+                row.style.display = "";
+                visibleCount += 1;
+            }
+
+            else {
+                row.style.display = "none";
+            }
+
+        }
+    );
+
+
+    visibleAlertCount.textContent =
+        visibleCount;
+}
+
+
+alertSearch.addEventListener(
+    "input",
+    filterAlerts
+);
+
+
+severityFilter.addEventListener(
+    "change",
+    filterAlerts
+);
+
+
+clearFiltersButton.addEventListener(
+    "click",
+    () => {
+
+        alertSearch.value = "";
+
+        severityFilter.value =
+            "all";
+
+        filterAlerts();
+
+    }
+);
+    </script>
+
+</body>
+</html>
