@@ -1,5 +1,0 @@
-alert_id,type,severity,severity_score,trusted_ip,original_severity,mitre_id,mitre_name,ip,username,timestamp,status,failed_attempts,previous_failures,time_window,login_hour,unique_users,targeted_users,unique_source_ips,source_ips,occurrences,first_seen,last_seen
-ALERT-001,Brute Force Attack,HIGH,3,False,,T1110.001,Password Guessing,8.8.8.8,admin,,,3,,60 seconds,,,,,,1,,
-ALERT-002,Successful Login After Multiple Failures,CRITICAL,4,False,,T1078,Valid Accounts,8.8.8.8,admin,,,,3,120 seconds,,,,,,1,,
-ALERT-003,Root Login Attempt,HIGH,3,False,,T1078,Valid Accounts,8.8.8.8,root,2026-08-15 20:00:30,failed,,,,,,,,,1,2026-08-15 20:00:30,2026-08-15 20:00:30
-ALERT-004,Password Spraying Attack,HIGH,3,False,,T1110.003,Password Spraying,8.8.8.8,,,,,,120 seconds,,4,"admin, guest, root, test",,,1,,
